@@ -1,0 +1,93 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{sklearn.datasets} \PYG{k+kn}{import} \PYG{n}{load\PYGZus{}iris}
+\PYG{k+kn}{from} \PYG{n+nn}{sklearn.model\PYGZus{}selection} \PYG{k+kn}{import} \PYG{n}{train\PYGZus{}test\PYGZus{}split}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+
+\PYG{c+c1}{\PYGZsh{} I pledge my honor that I have abided by the Steven\PYGZsq{}s honor system. \PYGZhy{} Stephen Szemis}
+
+\PYG{c+c1}{\PYGZsh{} Constants}
+\PYG{n}{test\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mf}{0.5}
+\PYG{n}{n} \PYG{o}{=} \PYG{l+m+mi}{8000} \PYG{c+c1}{\PYGZsh{} number of iterations}
+\PYG{n}{training\PYGZus{}rate} \PYG{o}{=} \PYG{l+m+mf}{0.001}
+
+\PYG{c+c1}{\PYGZsh{} Load data}
+\PYG{n}{iris} \PYG{o}{=} \PYG{n}{load\PYGZus{}iris}\PYG{p}{()}
+
+\PYG{c+c1}{\PYGZsh{} Gradient of loss (binary cross\PYGZhy{}entropy) is }
+\PYG{c+c1}{\PYGZsh{} vectorized is quiet simple. }
+\PYG{c+c1}{\PYGZsh{} This was very confusing to derive...}
+\PYG{k}{def} \PYG{n+nf}{derivative}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{,} \PYG{n}{theta}\PYG{p}{):}
+    \PYG{c+c1}{\PYGZsh{} Our current prediction of class labels}
+    \PYG{c+c1}{\PYGZsh{} Based on P(Y=1) = 1 / 1 + e\PYGZca{}\PYGZob{}\PYGZhy{}X * theta\PYGZcb{}}
+    \PYG{n}{pred} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{/} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{exp}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{theta}\PYG{p}{)))}
+    \PYG{n}{temp} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{subtract}\PYG{p}{(}\PYG{n}{pred}\PYG{o}{.}\PYG{n}{T}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{X}\PYG{o}{.}\PYG{n}{T}\PYG{p}{,} \PYG{n}{temp}\PYG{o}{.}\PYG{n}{T}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Takes a default set of weights and uses gradient decent to find}
+\PYG{c+c1}{\PYGZsh{} optimal configuration.}
+\PYG{c+c1}{\PYGZsh{} Params:}
+\PYG{c+c1}{\PYGZsh{} Y \PYGZhy{}\PYGZgt{} training targets}
+\PYG{c+c1}{\PYGZsh{} X \PYGZhy{}\PYGZgt{} training data}
+\PYG{c+c1}{\PYGZsh{} max\PYGZus{}iter \PYGZhy{}\PYGZgt{} max iterations}
+\PYG{c+c1}{\PYGZsh{} rate \PYGZhy{}\PYGZgt{} training rate}
+\PYG{c+c1}{\PYGZsh{} (option) theta \PYGZhy{}\PYGZgt{} initial weights, defaults to [1] * dimesions}
+\PYG{k}{def} \PYG{n+nf}{train}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{,} \PYG{n}{max\PYGZus{}iter}\PYG{p}{,} \PYG{n}{rate}\PYG{p}{,} \PYG{n}{theta}\PYG{p}{):}
+    \PYG{n}{curr\PYGZus{}iter} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{p}{(}\PYG{n}{curr\PYGZus{}iter} \PYG{o}{\PYGZlt{}} \PYG{n}{max\PYGZus{}iter}\PYG{p}{):}
+        \PYG{n}{z} \PYG{o}{=} \PYG{p}{(}\PYG{n}{rate} \PYG{o}{*} \PYG{n}{derivative}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{,} \PYG{n}{theta}\PYG{p}{))}
+        \PYG{n}{theta} \PYG{o}{=} \PYG{n}{theta} \PYG{o}{\PYGZhy{}} \PYG{n}{z}
+        \PYG{n}{curr\PYGZus{}iter} \PYG{o}{+=} \PYG{l+m+mi}{1}
+    \PYG{k}{return} \PYG{n}{theta}
+
+\PYG{c+c1}{\PYGZsh{} Ignore all but sepal length and width}
+\PYG{n}{features} \PYG{o}{=} \PYG{n}{iris}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}data\PYGZsq{}}\PYG{p}{][} \PYG{p}{:} \PYG{p}{,} \PYG{p}{:} \PYG{l+m+mi}{2}\PYG{p}{]}
+
+\PYG{c+c1}{\PYGZsh{} 1 for virginica, 0 otherwise}
+\PYG{n}{labels} \PYG{o}{=} \PYG{n}{iris}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}target\PYGZsq{}}\PYG{p}{]}
+\PYG{n}{labels}\PYG{p}{[}\PYG{n}{labels} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}
+\PYG{n}{labels}\PYG{p}{[}\PYG{n}{labels} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+\PYG{c+c1}{\PYGZsh{} for n in range(1000, 11000, 1000):}
+
+\PYG{n}{X\PYGZus{}train}\PYG{p}{,} \PYG{n}{X\PYGZus{}test}\PYG{p}{,} \PYG{n}{Y\PYGZus{}train}\PYG{p}{,} \PYG{n}{Y\PYGZus{}test} \PYG{o}{=} \PYG{n}{train\PYGZus{}test\PYGZus{}split}\PYG{p}{(}\PYG{n}{features}\PYG{p}{,} \PYG{n}{labels}\PYG{p}{,} \PYG{n}{test\PYGZus{}size}\PYG{o}{=}\PYG{n}{test\PYGZus{}size}\PYG{p}{)}
+\PYG{n}{initial\PYGZus{}theta} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]])}
+\PYG{n}{model} \PYG{o}{=} \PYG{n}{train}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{X\PYGZus{}train}\PYG{p}{),} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{Y\PYGZus{}train}\PYG{p}{]),} \PYG{n}{n}\PYG{p}{,} \PYG{n}{training\PYGZus{}rate}\PYG{p}{,} \PYG{n}{initial\PYGZus{}theta}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Sigmoid}
+\PYG{n}{result} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{/} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{exp}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{X\PYGZus{}test}\PYG{p}{,} \PYG{n}{model}\PYG{p}{)))}
+
+\PYG{n}{result}\PYG{p}{[}\PYG{n}{result} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mf}{0.5}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1}
+\PYG{n}{result}\PYG{p}{[}\PYG{n}{result} \PYG{o}{\PYGZlt{}=} \PYG{l+m+mf}{0.5}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}
+\PYG{n}{accuracy} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{count\PYGZus{}nonzero}\PYG{p}{(}\PYG{n}{result}\PYG{o}{.}\PYG{n}{T} \PYG{o}{\PYGZhy{}} \PYG{n}{Y\PYGZus{}test}\PYG{o}{.}\PYG{n}{T}\PYG{p}{)} \PYG{o}{/} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{result}\PYG{p}{))}
+
+\PYG{c+c1}{\PYGZsh{} Prepare graph}
+\PYG{n}{blue} \PYG{o}{=} \PYG{p}{[]}
+\PYG{n}{red} \PYG{o}{=} \PYG{p}{[]}
+\PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{result}\PYG{p}{)):}
+    \PYG{k}{if} \PYG{n}{Y\PYGZus{}test}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{n}{red}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{X\PYGZus{}test}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{n}{blue}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{X\PYGZus{}test}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+
+\PYG{n}{fig} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{()}
+\PYG{n}{ax} \PYG{o}{=} \PYG{n}{fig}\PYG{o}{.}\PYG{n}{add\PYGZus{}subplot}\PYG{p}{(}\PYG{l+m+mi}{111}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Graph our true values}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{scatter}\PYG{p}{([}\PYG{n}{i}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{red}\PYG{p}{],} \PYG{p}{[}\PYG{n}{j}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n}{red}\PYG{p}{],} \PYG{n}{s}\PYG{o}{=}\PYG{l+m+mi}{25}\PYG{p}{,} \PYG{n}{c}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}r\PYGZsq{}}\PYG{p}{,} \PYG{n}{marker}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}o\PYGZsq{}}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}Virginica\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{scatter}\PYG{p}{([}\PYG{n}{i}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{blue}\PYG{p}{],} \PYG{p}{[}\PYG{n}{j}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n}{blue}\PYG{p}{],} \PYG{n}{s}\PYG{o}{=}\PYG{l+m+mi}{25}\PYG{p}{,} \PYG{n}{c}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}b\PYGZsq{}}\PYG{p}{,} \PYG{n}{marker}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}s\PYGZsq{}}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}Not Virginica\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Plot the decision boundary}
+\PYG{n}{slope} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{model}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{/} \PYG{n}{model}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+\PYG{n}{axes} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{gca}\PYG{p}{()}
+\PYG{n}{x\PYGZus{}vals} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{axes}\PYG{o}{.}\PYG{n}{get\PYGZus{}xlim}\PYG{p}{())}
+\PYG{n}{y\PYGZus{}vals} \PYG{o}{=} \PYG{n}{slope} \PYG{o}{*} \PYG{n}{x\PYGZus{}vals}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{x\PYGZus{}vals}\PYG{p}{,} \PYG{n}{y\PYGZus{}vals}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Actually plot it}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{legend}\PYG{p}{(}\PYG{n}{loc}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}upper right\PYGZsq{}}\PYG{p}{);}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Plot hw1\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Sepal Height\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Sepal Width\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{()}
+\end{Verbatim}

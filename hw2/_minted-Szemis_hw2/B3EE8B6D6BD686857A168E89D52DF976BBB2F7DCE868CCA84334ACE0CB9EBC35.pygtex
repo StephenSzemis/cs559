@@ -1,0 +1,123 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} Author: Stephen Szemis}
+\PYG{c+c1}{\PYGZsh{} Date: 11/30/2020}
+
+\PYG{c+c1}{\PYGZsh{}Imports and includes}
+\PYG{k+kn}{import} \PYG{n+nn}{glob}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{from} \PYG{n+nn}{numpy} \PYG{k+kn}{import} \PYG{n}{linalg} \PYG{k}{as} \PYG{n}{LA}
+\PYG{k+kn}{from} \PYG{n+nn}{sklearn.model\PYGZus{}selection} \PYG{k+kn}{import} \PYG{n}{train\PYGZus{}test\PYGZus{}split}
+\PYG{k+kn}{from} \PYG{n+nn}{PIL} \PYG{k+kn}{import} \PYG{n}{Image}
+
+\PYG{n}{N} \PYG{o}{=} \PYG{l+m+mi}{177}
+\PYG{n}{D} \PYG{o}{=} \PYG{l+m+mi}{256}
+
+\PYG{n}{test\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{20}
+\PYG{n}{train\PYGZus{}size} \PYG{o}{=} \PYG{n}{N} \PYG{o}{\PYGZhy{}} \PYG{n}{test\PYGZus{}size}
+
+\PYG{c+c1}{\PYGZsh{} Helper for showing face in a window}
+\PYG{k}{def} \PYG{n+nf}{show\PYGZus{}face}\PYG{p}{(}\PYG{n}{face}\PYG{p}{):}
+    \PYG{n}{temp\PYGZus{}face} \PYG{o}{=} \PYG{n}{face}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{((}\PYG{l+m+mi}{256}\PYG{p}{,} \PYG{l+m+mi}{256}\PYG{p}{))}
+    \PYG{n}{imgplot} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{imshow}\PYG{p}{(}\PYG{n}{temp\PYGZus{}face}\PYG{p}{,} \PYG{n}{cmap}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}gray\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{()}
+
+\PYG{c+c1}{\PYGZsh{} Helper for saving save to a path}
+\PYG{k}{def} \PYG{n+nf}{save\PYGZus{}face}\PYG{p}{(}\PYG{n}{face}\PYG{p}{,} \PYG{n}{path}\PYG{p}{):}
+    \PYG{n}{result} \PYG{o}{=} \PYG{n}{face}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{((}\PYG{l+m+mi}{256}\PYG{p}{,} \PYG{l+m+mi}{256}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} result = Image.fromarray((temp\PYGZus{}face * 255).astype(np.uint8))}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{imsave}\PYG{p}{(}\PYG{n}{path}\PYG{p}{,} \PYG{n}{result}\PYG{p}{,} \PYG{n}{cmap}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}gray\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} A simple helper for sorting our eignvectors before returning}
+\PYG{k}{def} \PYG{n+nf}{get\PYGZus{}eigen}\PYG{p}{(}\PYG{n}{S}\PYG{p}{):}
+    \PYG{n}{eigenValues}\PYG{p}{,} \PYG{n}{eigenVectors} \PYG{o}{=} \PYG{n}{LA}\PYG{o}{.}\PYG{n}{eig}\PYG{p}{(}\PYG{n}{S}\PYG{p}{)}
+    \PYG{n}{idx} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{argsort}\PYG{p}{(}\PYG{n}{eigenValues}\PYG{p}{)}\PYG{c+c1}{\PYGZsh{}[::\PYGZhy{}1]}
+    \PYG{n}{eigenValues} \PYG{o}{=} \PYG{n}{eigenValues}\PYG{p}{[}\PYG{n}{idx}\PYG{p}{]}
+    \PYG{n}{eigenVectors} \PYG{o}{=} \PYG{n}{eigenVectors}\PYG{p}{[:,}\PYG{n}{idx}\PYG{p}{]}
+    \PYG{k}{return} \PYG{p}{(}\PYG{n}{eigenValues}\PYG{p}{,} \PYG{n}{eigenVectors}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Normalize vectors inside a matrix}
+\PYG{k}{def} \PYG{n+nf}{normalize}\PYG{p}{(}\PYG{n}{M}\PYG{p}{):}
+    \PYG{k}{for} \PYG{n}{index}\PYG{p}{,} \PYG{n}{m} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{M}\PYG{p}{):}
+        \PYG{n}{M}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]} \PYG{o}{=} \PYG{n}{m} \PYG{o}{/} \PYG{n}{LA}\PYG{o}{.}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{M}
+
+\PYG{c+c1}{\PYGZsh{} Array size is hard coded for number of image files, not great}
+\PYG{c+c1}{\PYGZsh{} practice, but probably good enough for this homework}
+\PYG{n}{faces} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n}{N}\PYG{p}{,} \PYG{n}{D} \PYG{o}{*} \PYG{n}{D}\PYG{p}{))}
+
+\PYG{c+c1}{\PYGZsh{} Read in faces. Note that we flatten images into 1\PYGZhy{}D arrays}
+\PYG{k}{for} \PYG{n}{index}\PYG{p}{,} \PYG{n}{filepath} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{glob}\PYG{o}{.}\PYG{n}{iglob}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}./face\PYGZus{}data/*.bmp\PYGZsq{}}\PYG{p}{)):}
+    \PYG{n}{faces}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{ravel}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{Image}\PYG{o}{.}\PYG{n}{open}\PYG{p}{(}\PYG{n}{filepath}\PYG{p}{),} \PYG{n}{dtype}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}float\PYGZsq{}}\PYG{p}{))}
+
+\PYG{c+c1}{\PYGZsh{} Create test / train sets (set random state for reproducable results)}
+\PYG{n}{train}\PYG{p}{,} \PYG{n}{test} \PYG{o}{=} \PYG{n}{train\PYGZus{}test\PYGZus{}split}\PYG{p}{(}\PYG{n}{faces}\PYG{p}{,} \PYG{n}{test\PYGZus{}size}\PYG{o}{=}\PYG{n}{test\PYGZus{}size}\PYG{p}{,} \PYG{n}{random\PYGZus{}state}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Center images}
+\PYG{n}{mean\PYGZus{}face} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{n}{train}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{/} \PYG{n}{train\PYGZus{}size}
+\PYG{n}{centered} \PYG{o}{=} \PYG{n}{train} \PYG{o}{\PYGZhy{}} \PYG{n}{mean\PYGZus{}face}
+\PYG{n}{Xt} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{centered}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Create S}
+\PYG{n}{S} \PYG{o}{=} \PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{centered}\PYG{p}{,} \PYG{n}{Xt}\PYG{p}{)} \PYG{o}{/} \PYG{n}{train\PYGZus{}size}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Calculate eigenvalues and eigenvectors}
+\PYG{n}{eigVals}\PYG{p}{,} \PYG{n}{eigVecs} \PYG{o}{=} \PYG{n}{get\PYGZus{}eigen}\PYG{p}{(}\PYG{n}{S}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Create and normalize eigenfaces}
+\PYG{n}{eigenfaces} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n}{N}\PYG{p}{,} \PYG{n}{D} \PYG{o}{*} \PYG{n}{D}\PYG{p}{))}
+\PYG{n}{eigenfaces} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{Xt}\PYG{p}{,} \PYG{n}{eigVecs}\PYG{p}{[:,:}\PYG{n}{N}\PYG{p}{]))}
+\PYG{n}{eigenfaces} \PYG{o}{=} \PYG{n}{normalize}\PYG{p}{(}\PYG{n}{eigenfaces}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Create our principal components set}
+\PYG{n}{K} \PYG{o}{=} \PYG{l+m+mi}{30}
+\PYG{n}{Wt} \PYG{o}{=} \PYG{n}{eigenfaces}\PYG{p}{[:}\PYG{n}{K}\PYG{p}{]}
+\PYG{n}{W} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{Wt}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Save images for part 1}
+\PYG{k}{for} \PYG{n}{index} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{K}\PYG{p}{):}
+    \PYG{n}{save\PYGZus{}face}\PYG{p}{(}\PYG{n}{eigenfaces}\PYG{p}{[}\PYG{n}{index}\PYG{p}{],} \PYG{l+s+s2}{\PYGZdq{}output\PYGZus{}part1/eigenface\PYGZus{}\PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{index}\PYG{p}{)} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}.png\PYGZdq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Reconstruct images for part 2}
+\PYG{k}{def} \PYG{n+nf}{reconstruct}\PYG{p}{(}\PYG{n}{face}\PYG{p}{,} \PYG{n}{W}\PYG{p}{,} \PYG{n}{Wt}\PYG{p}{):}
+    \PYG{n}{x} \PYG{o}{=} \PYG{n}{mean\PYGZus{}face} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{((}\PYG{n}{face} \PYG{o}{\PYGZhy{}} \PYG{n}{mean\PYGZus{}face}\PYG{p}{),} \PYG{n}{W}\PYG{p}{),} \PYG{n}{Wt}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{x}
+
+\PYG{n}{refaced} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n}{test\PYGZus{}size}\PYG{p}{,} \PYG{n}{D} \PYG{o}{*} \PYG{n}{D}\PYG{p}{))}
+\PYG{k}{for} \PYG{n}{index}\PYG{p}{,} \PYG{n}{face} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{test}\PYG{p}{):}
+    \PYG{n}{refaced}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]} \PYG{o}{=} \PYG{n}{reconstruct}\PYG{p}{(}\PYG{n}{face}\PYG{p}{,} \PYG{n}{W}\PYG{p}{,} \PYG{n}{Wt}\PYG{p}{)}
+
+\PYG{k}{for} \PYG{n}{index} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{5}\PYG{p}{):}
+    \PYG{n}{save\PYGZus{}face}\PYG{p}{(}\PYG{n}{refaced}\PYG{p}{[}\PYG{n}{index}\PYG{p}{],} \PYG{l+s+s2}{\PYGZdq{}output\PYGZus{}part2/reconstruct\PYGZus{}\PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{index}\PYG{p}{)} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}.png\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{save\PYGZus{}face}\PYG{p}{(}\PYG{n}{test}\PYG{p}{[}\PYG{n}{index}\PYG{p}{],} \PYG{l+s+s2}{\PYGZdq{}output\PYGZus{}part2/original\PYGZus{}\PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{index}\PYG{p}{)} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}.png\PYGZdq{}}\PYG{p}{)}
+
+\PYG{n}{error\PYGZus{}calc} \PYG{o}{=} \PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{abs}\PYG{p}{((}\PYG{n}{x} \PYG{o}{\PYGZhy{}} \PYG{n}{test}\PYG{p}{)))} \PYG{o}{/} \PYG{p}{(}\PYG{n}{test\PYGZus{}size} \PYG{o}{*} \PYG{n}{D} \PYG{o}{*} \PYG{n}{D}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Calculate error for part 2}
+\PYG{n}{part2\PYGZus{}error} \PYG{o}{=} \PYG{n}{error\PYGZus{}calc}\PYG{p}{(}\PYG{n}{refaced}\PYG{p}{)}
+
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Error for part 2 is \PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{part2\PYGZus{}error}\PYG{p}{))}
+
+\PYG{c+c1}{\PYGZsh{} Create loop for part 3}
+\PYG{n}{step} \PYG{o}{=} \PYG{l+m+mi}{10}
+\PYG{n}{error} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n}{train\PYGZus{}size} \PYG{o}{//} \PYG{n}{step}\PYG{p}{))}
+\PYG{n}{k\PYGZus{}values} \PYG{o}{=} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{train\PYGZus{}size} \PYG{o}{\PYGZhy{}} \PYG{n}{step}\PYG{p}{,} \PYG{n}{step}\PYG{p}{)}
+\PYG{k}{for} \PYG{n}{index}\PYG{p}{,} \PYG{n}{k} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{k\PYGZus{}values}\PYG{p}{):}
+    \PYG{n}{wt} \PYG{o}{=} \PYG{n}{eigenfaces}\PYG{p}{[:}\PYG{n}{k}\PYG{p}{]}
+    \PYG{n}{w} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{transpose}\PYG{p}{(}\PYG{n}{wt}\PYG{p}{)}
+    \PYG{n}{const} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n}{test\PYGZus{}size}\PYG{p}{,} \PYG{n}{D} \PYG{o}{*} \PYG{n}{D}\PYG{p}{))}
+    \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{face} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{test}\PYG{p}{):}
+        \PYG{n}{const}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n}{reconstruct}\PYG{p}{(}\PYG{n}{face}\PYG{p}{,} \PYG{n}{w}\PYG{p}{,} \PYG{n}{wt}\PYG{p}{)}
+    \PYG{n}{error}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]} \PYG{o}{=} \PYG{n}{error\PYGZus{}calc}\PYG{p}{(}\PYG{n}{const}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Graph data for part 3}
+\PYG{n}{fig} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{()}
+\PYG{n}{ax} \PYG{o}{=} \PYG{n}{fig}\PYG{o}{.}\PYG{n}{add\PYGZus{}subplot}\PYG{p}{(}\PYG{l+m+mi}{111}\PYG{p}{)}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{scatter}\PYG{p}{([}\PYG{n}{i} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{k\PYGZus{}values}\PYG{p}{],} \PYG{p}{[}\PYG{n}{j} \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n}{error}\PYG{p}{],} \PYG{n}{s}\PYG{o}{=}\PYG{l+m+mi}{25}\PYG{p}{,} \PYG{n}{c}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}b\PYGZsq{}}\PYG{p}{,} \PYG{n}{marker}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}s\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Produce Graph}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Plot hw2\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}K Values\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Error Rate\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{()}
+\end{Verbatim}

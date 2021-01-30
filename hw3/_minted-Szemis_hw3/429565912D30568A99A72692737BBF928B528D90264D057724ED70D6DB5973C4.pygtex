@@ -1,0 +1,175 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} Author: Stephen Szemis}
+\PYG{c+c1}{\PYGZsh{} Pledge: I pledge my honor that I have abided by the Stevens honor system. \PYGZhy{} Stephen Szemis}
+\PYG{c+c1}{\PYGZsh{} Date: December, 9, 2020}
+
+\PYG{c+c1}{\PYGZsh{} Note: This code is based of off the code we saw and discussed in class.}
+\PYG{c+c1}{\PYGZsh{} See link: https://dev.to/shamdasani/build\PYGZhy{}a\PYGZhy{}flexible\PYGZhy{}neural\PYGZhy{}network\PYGZhy{}with\PYGZhy{}backpropagation\PYGZhy{}in\PYGZhy{}python}
+
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{import} \PYG{n+nn}{random} \PYG{k}{as} \PYG{n+nn}{rand}
+
+\PYG{c+c1}{\PYGZsh{} Used for our final question}
+\PYG{k+kn}{from} \PYG{n+nn}{keras} \PYG{k+kn}{import} \PYG{n}{models}
+\PYG{k+kn}{from} \PYG{n+nn}{keras} \PYG{k+kn}{import} \PYG{n}{layers}
+\PYG{k+kn}{from} \PYG{n+nn}{keras.utils} \PYG{k+kn}{import} \PYG{n}{to\PYGZus{}categorical}
+
+\PYG{k}{def} \PYG{n+nf}{split\PYGZus{}data}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{,} \PYG{n}{test\PYGZus{}percent}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{):}
+    \PYG{n}{testX} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{trainX} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{testY} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{trainY} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{y} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{Y}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]):}
+        \PYG{n}{num} \PYG{o}{=} \PYG{n}{rand}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{num} \PYG{o}{\PYGZlt{}} \PYG{n}{test\PYGZus{}percent}\PYG{p}{):}
+            \PYG{n}{testX}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{X}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{testY}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{y}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{trainX}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{X}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{trainY}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{y}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{testX}\PYG{p}{),} \PYG{n}{np}\PYG{o}{.}\PYG{n}{atleast\PYGZus{}2d}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{testY}\PYG{p}{)),} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{trainX}\PYG{p}{),} \PYG{n}{np}\PYG{o}{.}\PYG{n}{atleast\PYGZus{}2d}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{trainY}\PYG{p}{))}
+
+\PYG{c+c1}{\PYGZsh{} Grab our iris data}
+\PYG{k}{def} \PYG{n+nf}{get\PYGZus{}data}\PYG{p}{():}
+    \PYG{n}{X} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{Y} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{f} \PYG{o}{=} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}iris.data\PYGZsq{}}\PYG{p}{)}
+    \PYG{k}{for} \PYG{n}{line} \PYG{o+ow}{in} \PYG{n}{f}\PYG{p}{:}
+        \PYG{n}{z} \PYG{o}{=} \PYG{n}{line}\PYG{o}{.}\PYG{n}{strip}\PYG{p}{()}\PYG{o}{.}\PYG{n}{split}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{},\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{temp} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{float}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{z}\PYG{p}{[:}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]]}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{temp} \PYG{o}{!=} \PYG{p}{[]):}
+            \PYG{n}{X}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{temp}\PYG{p}{)}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{z}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}Iris\PYGZhy{}virginica\PYGZsq{}}\PYG{p}{):}
+                \PYG{n}{Y}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+            \PYG{k}{elif} \PYG{p}{(}\PYG{n}{z}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}Iris\PYGZhy{}versicolor\PYGZsq{}}\PYG{p}{):}
+                \PYG{n}{Y}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{l+m+mf}{0.5}\PYG{p}{)}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{Y}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{X}\PYG{p}{),} \PYG{n}{np}\PYG{o}{.}\PYG{n}{atleast\PYGZus{}2d}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{Y}\PYG{p}{))}
+
+\PYG{k}{class} \PYG{n+nc}{Neural\PYGZus{}Network}\PYG{p}{(}\PYG{n+nb}{object}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} parameters}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{inputSize} \PYG{o}{=} \PYG{l+m+mi}{4}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{outputSize} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hiddenSize} \PYG{o}{=} \PYG{l+m+mi}{6}
+
+        \PYG{c+c1}{\PYGZsh{} weights}
+        \PYG{c+c1}{\PYGZsh{} (4x6) weight matrix from input to hidden layer}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W1} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randn}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{inputSize}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hiddenSize}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} (6x1) weight matrix from hidden to output layer}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W2} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randn}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hiddenSize}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{outputSize}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{forward}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{X}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} forward propagation through our network}
+        \PYG{c+c1}{\PYGZsh{} dot product of X (input) and first set of 3x2 weights}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W1}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{sigmoid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} activation function}
+        \PYG{c+c1}{\PYGZsh{} dot product of hidden layer (z2) and second set of 3x1 weights}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z3} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W2}\PYG{p}{)}
+        \PYG{n}{o} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{sigmoid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z3}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} final activation function}
+        \PYG{k}{return} \PYG{n}{o}
+
+    \PYG{k}{def} \PYG{n+nf}{sigmoid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{s}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} activation function}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{o}{/}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{+}\PYG{n}{np}\PYG{o}{.}\PYG{n}{exp}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{s}\PYG{p}{))}
+
+    \PYG{k}{def} \PYG{n+nf}{sigmoidPrime}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{s}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} derivative of sigmoid}
+        \PYG{k}{return} \PYG{n}{s} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{s}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{backward}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{X}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{o}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} backward propgate through the network}
+        
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{o\PYGZus{}error} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{subtract}\PYG{p}{(}\PYG{n}{y}\PYG{o}{.}\PYG{n}{T}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} error in output}
+
+        \PYG{c+c1}{\PYGZsh{} applying derivative of sigmoid to error}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{o\PYGZus{}delta} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{o\PYGZus{}error}\PYG{o}{*}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{sigmoidPrime}\PYG{p}{(}\PYG{n}{o}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} z2 error: how much our hidden layer weights contributed to output error}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2\PYGZus{}error} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{o\PYGZus{}delta}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W2}\PYG{o}{.}\PYG{n}{T}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} applying derivative of sigmoid to z2 error}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2\PYGZus{}delta} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2\PYGZus{}error}\PYG{o}{*}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{sigmoidPrime}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} adjusting first set (input \PYGZhy{}\PYGZhy{}\PYGZgt{} hidden) weights}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W1} \PYG{o}{+=} \PYG{n}{X}\PYG{o}{.}\PYG{n}{T}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2\PYGZus{}delta}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} adjusting second set (hidden \PYGZhy{}\PYGZhy{}\PYGZgt{} output) weights}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{W2} \PYG{o}{+=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{z2}\PYG{o}{.}\PYG{n}{T}\PYG{o}{.}\PYG{n}{dot}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{o\PYGZus{}delta}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{train}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{X}\PYG{p}{,} \PYG{n}{y}\PYG{p}{):}
+        \PYG{n}{o} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{forward}\PYG{p}{(}\PYG{n}{X}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{backward}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{accuracy}\PYG{p}{(}\PYG{n}{o}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{):}
+    \PYG{n}{acc} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{sample} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{o}\PYG{p}{):}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{sample} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.33}\PYG{p}{)} \PYG{o+ow}{and} \PYG{p}{(}\PYG{n}{Y}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{):}
+            \PYG{n}{acc} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{k}{elif} \PYG{p}{(}\PYG{n}{sample} \PYG{o}{\PYGZgt{}} \PYG{l+m+mf}{0.66}\PYG{p}{)} \PYG{o+ow}{and} \PYG{p}{(}\PYG{n}{Y}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{):}
+            \PYG{n}{acc} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{k}{elif} \PYG{p}{(}\PYG{n}{sample} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.66}\PYG{p}{)} \PYG{o+ow}{and} \PYG{p}{(}\PYG{n}{sample} \PYG{o}{\PYGZgt{}} \PYG{l+m+mf}{0.33} \PYG{p}{)} \PYG{o+ow}{and} \PYG{p}{(}\PYG{n}{Y}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mf}{0.5}\PYG{p}{):}
+            \PYG{n}{acc} \PYG{o}{+=} \PYG{l+m+mi}{1}
+    \PYG{k}{return} \PYG{p}{(}\PYG{n}{acc} \PYG{o}{/} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{o}\PYG{p}{))} \PYG{o}{*} \PYG{l+m+mi}{100}
+
+\PYG{k}{def} \PYG{n+nf}{run\PYGZus{}NN}\PYG{p}{():}
+    \PYG{n}{X}\PYG{p}{,} \PYG{n}{Y} \PYG{o}{=} \PYG{n}{get\PYGZus{}data}\PYG{p}{()}
+    \PYG{n}{X} \PYG{o}{=} \PYG{n}{X}\PYG{o}{/}\PYG{n}{np}\PYG{o}{.}\PYG{n}{amax}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} maximum of X array}
+    \PYG{n}{testX}\PYG{p}{,} \PYG{n}{testY}\PYG{p}{,} \PYG{n}{trainX}\PYG{p}{,} \PYG{n}{trainY} \PYG{o}{=} \PYG{n}{split\PYGZus{}data}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{)}
+
+    \PYG{n}{NN} \PYG{o}{=} \PYG{n}{Neural\PYGZus{}Network}\PYG{p}{()}
+    \PYG{n}{loss} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{test\PYGZus{}accuracy} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{train\PYGZus{}accuracy} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{c+c1}{\PYGZsh{} Test and Train loop}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1000}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} mean sum squared loss}
+        \PYG{n}{train\PYGZus{}accuracy}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{accuracy}\PYG{p}{(}\PYG{n}{NN}\PYG{o}{.}\PYG{n}{forward}\PYG{p}{(}\PYG{n}{trainX}\PYG{p}{),} \PYG{n}{trainY}\PYG{p}{))}
+        \PYG{n}{test\PYGZus{}accuracy}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{accuracy}\PYG{p}{(}\PYG{n}{NN}\PYG{o}{.}\PYG{n}{forward}\PYG{p}{(}\PYG{n}{testX}\PYG{p}{),} \PYG{n}{testY}\PYG{p}{))}
+        \PYG{n}{NN}\PYG{o}{.}\PYG{n}{train}\PYG{p}{(}\PYG{n}{trainX}\PYG{p}{,} \PYG{n}{trainY}\PYG{p}{)}
+
+    \PYG{n}{fig} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{()}
+    \PYG{n}{ax} \PYG{o}{=} \PYG{n}{fig}\PYG{o}{.}\PYG{n}{add\PYGZus{}subplot}\PYG{p}{(}\PYG{l+m+mi}{111}\PYG{p}{)}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{scatter}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{train\PYGZus{}accuracy}\PYG{p}{)),} \PYG{n}{train\PYGZus{}accuracy}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} Produce Graph}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Plot hw3 Iteration versus Train Accuracy\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Iteration\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Train Accuracy\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{fig}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hw3\PYGZus{}train.png\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{n}{fig} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{()}
+    \PYG{n}{ax} \PYG{o}{=} \PYG{n}{fig}\PYG{o}{.}\PYG{n}{add\PYGZus{}subplot}\PYG{p}{(}\PYG{l+m+mi}{111}\PYG{p}{)}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{scatter}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{test\PYGZus{}accuracy}\PYG{p}{)),} \PYG{n}{test\PYGZus{}accuracy}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} Produce Graph}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Plot hw3 Iteration versus Test Accuracy\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Iteration\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Test Accuracy\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{fig}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hw3\PYGZus{}test.png\PYGZsq{}}\PYG{p}{)}
+
+\PYG{k}{def} \PYG{n+nf}{run\PYGZus{}keras\PYGZus{}model}\PYG{p}{():}
+    \PYG{n}{X}\PYG{p}{,} \PYG{n}{Y} \PYG{o}{=} \PYG{n}{get\PYGZus{}data}\PYG{p}{()}
+    \PYG{n}{X} \PYG{o}{=} \PYG{n}{X}\PYG{o}{/}\PYG{n}{np}\PYG{o}{.}\PYG{n}{amax}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} maximum of X array}
+    \PYG{n}{testX}\PYG{p}{,} \PYG{n}{testY}\PYG{p}{,} \PYG{n}{trainX}\PYG{p}{,} \PYG{n}{trainY} \PYG{o}{=} \PYG{n}{split\PYGZus{}data}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{)}
+
+    \PYG{n}{network} \PYG{o}{=} \PYG{n}{models}\PYG{o}{.}\PYG{n}{Sequential}\PYG{p}{()}
+    \PYG{n}{network}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{32}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{,} \PYG{n}{input\PYGZus{}shape}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{,)))}
+    \PYG{n}{network}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} network.add(layers.Dense(16, activation=\PYGZsq{}relu\PYGZsq{}))}
+    \PYG{n}{network}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{layers}\PYG{o}{.}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}softmax\PYGZsq{}}\PYG{p}{))}
+
+    \PYG{n}{network}\PYG{o}{.}\PYG{n}{compile}\PYG{p}{(}\PYG{n}{optimizer}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}rmsprop\PYGZsq{}}\PYG{p}{,} \PYG{n}{loss}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}categorical\PYGZus{}crossentropy\PYGZsq{}}\PYG{p}{,} \PYG{n}{metrics}\PYG{o}{=}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}accuracy\PYGZsq{}}\PYG{p}{])}
+
+    \PYG{c+c1}{\PYGZsh{} Transform our output into binary vectors}
+    \PYG{n}{train\PYGZus{}labels} \PYG{o}{=} \PYG{n}{to\PYGZus{}categorical}\PYG{p}{(}\PYG{n}{trainY}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{num\PYGZus{}classes}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{n}{test\PYGZus{}labels} \PYG{o}{=} \PYG{n}{to\PYGZus{}categorical}\PYG{p}{(}\PYG{n}{testY}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{num\PYGZus{}classes}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+
+    \PYG{n}{network}\PYG{o}{.}\PYG{n}{fit}\PYG{p}{(}\PYG{n}{trainX}\PYG{p}{,} \PYG{n}{train\PYGZus{}labels}\PYG{p}{,} \PYG{n}{epochs}\PYG{o}{=}\PYG{l+m+mi}{50}\PYG{p}{)}
+    \PYG{n}{test\PYGZus{}loss}\PYG{p}{,} \PYG{n}{test\PYGZus{}acc} \PYG{o}{=} \PYG{n}{network}\PYG{o}{.}\PYG{n}{evaluate}\PYG{p}{(}\PYG{n}{testX}\PYG{p}{,} \PYG{n}{test\PYGZus{}labels}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}test\PYGZus{}acc:\PYGZsq{}}\PYG{p}{,} \PYG{n}{test\PYGZus{}acc}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}test\PYGZus{}loss:\PYGZsq{}}\PYG{p}{,} \PYG{n}{test\PYGZus{}loss}\PYG{p}{)}
+
+\PYG{n}{run\PYGZus{}keras\PYGZus{}model}\PYG{p}{()}
+\end{Verbatim}

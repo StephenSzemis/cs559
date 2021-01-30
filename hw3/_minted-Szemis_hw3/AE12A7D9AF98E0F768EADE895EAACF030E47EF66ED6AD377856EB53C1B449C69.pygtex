@@ -1,0 +1,37 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} Author: Stephen Szemis}
+\PYG{c+c1}{\PYGZsh{} Pledge: I pledge my honor that I have abided by the Stevens honor system. \PYGZhy{} Stephen Szemis}
+\PYG{c+c1}{\PYGZsh{} Date: December, 9, 2020}
+
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+
+\PYG{n}{np}\PYG{o}{.}\PYG{n}{set\PYGZus{}printoptions}\PYG{p}{(}\PYG{n}{precision}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+
+\PYG{n}{data} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([[}\PYG{l+m+mf}{5.9}\PYG{p}{,} \PYG{l+m+mf}{3.2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{4.6}\PYG{p}{,} \PYG{l+m+mf}{2.9}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{6.2}\PYG{p}{,} \PYG{l+m+mf}{2.8}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{4.7}\PYG{p}{,} \PYG{l+m+mf}{3.2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{5.5}\PYG{p}{,} \PYG{l+m+mf}{4.2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{5.0}\PYG{p}{,} \PYG{l+m+mf}{3.0}\PYG{p}{],}
+                 \PYG{p}{[}\PYG{l+m+mf}{4.9}\PYG{p}{,} \PYG{l+m+mf}{3.1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{6.7}\PYG{p}{,} \PYG{l+m+mf}{3.1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{5.1}\PYG{p}{,} \PYG{l+m+mf}{3.8}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{6.0}\PYG{p}{,} \PYG{l+m+mf}{3.0}\PYG{p}{]])}
+
+\PYG{n}{cluster\PYGZus{}colors} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}RED\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}GREEN\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}BLUE\PYGZdq{}}\PYG{p}{]}
+\PYG{n}{cluster\PYGZus{}centers} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([[}\PYG{l+m+mf}{6.2}\PYG{p}{,} \PYG{l+m+mf}{3.2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{6.6}\PYG{p}{,} \PYG{l+m+mf}{3.7}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mf}{6.5}\PYG{p}{,} \PYG{l+m+mf}{3.0}\PYG{p}{]])}
+
+\PYG{k}{def} \PYG{n+nf}{update\PYGZus{}centers}\PYG{p}{():}
+    \PYG{n}{k} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{(}\PYG{n}{cluster\PYGZus{}centers}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{distances} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{((}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{data}\PYG{p}{),} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{cluster\PYGZus{}centers}\PYG{p}{)))}
+    \PYG{c+c1}{\PYGZsh{} Get sets for each cluster}
+    \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{data}\PYG{p}{):}
+        \PYG{k}{for} \PYG{n}{j}\PYG{p}{,} \PYG{n}{y} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{cluster\PYGZus{}centers}\PYG{p}{):}
+            \PYG{n}{distances}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{n}{j}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{((}\PYG{n}{x} \PYG{o}{\PYGZhy{}} \PYG{n}{y}\PYG{p}{)} \PYG{o}{**} \PYG{l+m+mi}{2}\PYG{p}{))}
+    \PYG{n}{cluster\PYGZus{}assignments} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{argmin}\PYG{p}{(}\PYG{n}{distances}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} Recompute Cluster means}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{k}\PYG{p}{):}
+        \PYG{n}{t} \PYG{o}{=} \PYG{n}{data}\PYG{p}{[}\PYG{n}{cluster\PYGZus{}assignments} \PYG{o}{==} \PYG{n}{i}\PYG{p}{]}
+        \PYG{n}{cluster\PYGZus{}centers}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{n}{t}\PYG{p}{,} \PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{/} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+
+\PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{):}
+    \PYG{n}{update\PYGZus{}centers}\PYG{p}{()}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}iteration : \PYGZdq{}}\PYG{p}{,} \PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}center of RED is\PYGZdq{}}\PYG{p}{,} \PYG{n}{cluster\PYGZus{}centers}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{p}{:])}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}center of GREEN is\PYGZdq{}}\PYG{p}{,} \PYG{n}{cluster\PYGZus{}centers}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{p}{:])}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}center of BLUE is\PYGZdq{}}\PYG{p}{,} \PYG{n}{cluster\PYGZus{}centers}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{p}{:])}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}
